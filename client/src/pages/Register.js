@@ -11,7 +11,12 @@ export default function Register() {
   const submit = async (e) => {
     e.preventDefault();
     try { await register(form.name, form.email, form.password); navigate("/dashboard"); }
-    catch (err) { setError(err.response?.data?.message || "Registration failed"); }
+    catch (err) {
+      setError(
+        err.response?.data?.message ||
+        "Cannot reach the server. Please check the API deployment and try again."
+      );
+    }
   };
 
   return (

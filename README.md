@@ -29,6 +29,36 @@ npm start
 Frontend: http://localhost:3000
 Backend: http://localhost:5000
 
+## Deploy
+
+Deploy the frontend and API as separate Vercel projects from this repository.
+
+### Backend Vercel project
+
+1. Import this GitHub repository as a new Vercel project.
+2. Set **Root Directory** to `server`.
+3. Add these environment variables:
+   - `MONGO_URI`: a reachable MongoDB Atlas connection string.
+   - `JWT_SECRET`: a strong random secret.
+   - `CLIENT_URL`: the exact deployed frontend origin, for example,
+     `https://your-app.vercel.app`.
+   - `JUDGE0_URL`: `https://ce.judge0.com`.
+4. Deploy the project. The API endpoints will be under
+   `https://your-api.vercel.app/api`.
+
+### Frontend Vercel project
+
+Set **Root Directory** to `client` and add this environment variable:
+
+- `REACT_APP_API_URL`: the backend URL ending in `/api`, for example,
+  `https://your-api.vercel.app/api`.
+
+Redeploy the frontend after setting the variable. Do not use `localhost` in a
+deployed frontend; it points to the visitor's own computer.
+
+Do not set `REACT_APP_API_URL` to `localhost` in the Vercel project. In a
+deployed browser, `localhost` points to the visitor's own computer.
+
 ## Required server .env
 ```env
 PORT=5000

@@ -18,7 +18,10 @@ export default function Login() {
       await login(form.email, form.password);
       navigate("/");
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed. Please check your details and try again.");
+      setError(
+        err.response?.data?.message ||
+        "Cannot reach the server. Please check the API deployment and try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
