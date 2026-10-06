@@ -19,6 +19,9 @@ node seed.js
 npm run dev
 ```
 
+Running `node seed.js` adds missing sample problems by slug and preserves
+existing problem records.
+
 ### 2. Client
 ```bash
 cd client
