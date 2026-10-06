@@ -11,18 +11,43 @@ export default function Dashboard() {
 
   useEffect(() => {
     let isCurrent = true;
-    API.get("/submissions/mine")
-      .then(({ data }) => {
-        if (isCurrent) setSubmissions(data.submissions);
-      })
-      .catch((requestError) => {
-        if (isCurrent) setError(requestError.response?.data?.message || "Could not load your progress. Please try again.");
-      })
-      .finally(() => {
-        if (isCurrent) setLoading(false);
-      });
+    const loadSubmissions = async (showLoading = false) => {
+      if (showLoading) setLoading(true);
+      setError("");
 
-    return () => { isCurrent = false; };
+      try {
+        const { data } = await API.get("/submissions/mine");
+        if (isCurrent) setSubmissions(data.submissions || []);
+      } catch (requestError) {
+        if (isCurrent) {
+          setError(
+            requestError.response?.data?.message ||
+              "Could not load your progress. Please try again."
+          );
+        }
+      } finally {
+        if (isCurrent) setLoading(false);
+      }
+    };
+
+    const refreshWhenVisible = () => {
+      if (!document.hidden) loadSubmissions();
+    };
+
+    loadSubmissions(true);
+    window.addEventListener("codeforge:submission-updated", refreshWhenVisible);
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+
+    return () => {
+      isCurrent = false;
+      window.removeEventListener(
+        "codeforge:submission-updated",
+        refreshWhenVisible
+      );
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
   }, []);
 
   const acceptedSubmissions = submissions.filter(submission => submission.status === "Accepted");

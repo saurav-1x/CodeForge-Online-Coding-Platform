@@ -105,6 +105,8 @@ function CodeEditor({ problem }) {
         return;
       }
 
+      window.dispatchEvent(new Event("codeforge:submission-updated"));
+
       const status = data.status || "Pending";
       const passed = data.passedTests ?? 0;
       const total = data.totalTests ?? 0;

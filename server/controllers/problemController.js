@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Problem = require("../models/Problem");
 
 // Get all problems
@@ -24,7 +25,11 @@ const getProblems = async (req, res) => {
 // Get single problem
 const getProblemById = async (req, res) => {
   try {
-    const problem = await Problem.findById(req.params.id);
+    const identifier = req.params.id;
+    const query = mongoose.isValidObjectId(identifier)
+      ? { _id: identifier }
+      : { slug: identifier };
+    const problem = await Problem.findOne(query);
 
     if (!problem) {
       return res.status(404).json({

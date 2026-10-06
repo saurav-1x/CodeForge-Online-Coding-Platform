@@ -28,6 +28,9 @@ Count Grid Routes.
 Running `node seed.js` adds missing sample problems by slug and preserves
 existing problem records. The deployed API also adds missing samples
 automatically when it first connects to the database.
+The problems page fetches this shared database list, so every signed-in user
+sees the same newly added challenges without maintaining a separate frontend
+list.
 
 Solutions are executed by Judge0. **Run Code** displays the program's standard
 output or execution error. **Submit** runs the complete submitted program once
