@@ -1,0 +1,23 @@
+# Build and test output
+coverage/
+client/build/
+
+# Dependencies and local environment
+**/node_modules/
+**/.env
+!**/.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor files
+.idea/
+.vscode/
