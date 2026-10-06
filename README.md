@@ -19,8 +19,22 @@ node seed.js
 npm run dev
 ```
 
+The problem set includes ten additional LeetCode-inspired challenges:
+Merge Two Ordered Lists, Rotate a List Right, Largest Contiguous Sum, Best
+Single Trade, Missing Sequence Value, Longest Distinct Window, Count Land
+Regions, Fewest Coins to Reach a Total, Find a Value in a Rotated List, and
+Count Grid Routes.
+
 Running `node seed.js` adds missing sample problems by slug and preserves
-existing problem records.
+existing problem records. The deployed API also adds missing samples
+automatically when it first connects to the database.
+
+Solutions are executed by Judge0. **Run Code** displays the program's standard
+output or execution error. **Submit** runs the complete submitted program once
+for every test case stored with that problem, compares trimmed output, and
+reports how many cases passed. Hidden cases are checked but their expected
+outputs are not returned to the browser. Programs read the example's input
+format from standard input and print their answer to standard output.
 
 ### 2. Client
 ```bash

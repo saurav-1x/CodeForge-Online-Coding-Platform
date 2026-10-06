@@ -3,6 +3,12 @@ import React, { useEffect, useState } from "react";
 import Editor from "@monaco-editor/react";
 import API from "../services/api";
 
+const LANGUAGE_IDS = {
+  python: 71,
+  javascript: 63,
+  java: 62,
+};
+
 function CodeEditor({ problem }) {
   const [language, setLanguage] = useState("python");
   const [code, setCode] = useState("");
@@ -17,6 +23,8 @@ function CodeEditor({ problem }) {
       setCode(problem.starterCode[language]);
     } else if (language === "python") {
       setCode('print("Hello from CodeForge")');
+    } else if (language === "javascript") {
+      setCode('console.log("Hello from CodeForge");');
     } else {
       setCode(`public class Main {
     public static void main(String[] args) {
@@ -32,11 +40,9 @@ function CodeEditor({ problem }) {
       setLoading(true);
       setOutput("Running your code...");
 
-      const languageId = language === "python" ? 71 : 62;
-
       const response = await API.post("/code/run", {
         source_code: code,
-        language_id: languageId,
+        language_id: LANGUAGE_IDS[language],
         stdin: "",
       });
 
@@ -84,13 +90,11 @@ function CodeEditor({ problem }) {
       setLoading(true);
       setOutput("Submitting your solution...");
 
-      const languageId = language === "python" ? 71 : 62;
-
       const problemId = problem.slug || problem._id || problem.id;
 
       const response = await API.post("/submissions/submit", {
         source_code: code,
-        language_id: languageId,
+        language_id: LANGUAGE_IDS[language],
         problem_id: problemId,
       });
 
@@ -140,6 +144,7 @@ function CodeEditor({ problem }) {
             disabled={loading}
           >
             <option value="python">Python</option>
+            <option value="javascript">JavaScript</option>
             <option value="java">Java</option>
           </select>
         </div>

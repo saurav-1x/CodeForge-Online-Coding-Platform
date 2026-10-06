@@ -1,4 +1,4 @@
-const axios = require("axios");
+const { submitAndWait } = require("../services/judge0Service");
 
 const runCode = async (req, res) => {
   try {
@@ -15,43 +15,28 @@ const runCode = async (req, res) => {
       });
     }
 
-    if (!language_id) {
+    const languageId = Number(language_id);
+
+    if (![62, 63, 71].includes(languageId)) {
       return res.status(400).json({
         success: false,
-        message: "Language ID is required"
+        message: "Only JavaScript, Python, and Java are supported"
       });
     }
 
-    console.log("Running code...");
-    console.log("Language ID:", language_id);
-
-    const response = await axios.post(
-      "https://ce.judge0.com/submissions?base64_encoded=false&wait=true",
-      {
-        source_code: source_code,
-        language_id: Number(language_id),
-        stdin: stdin || ""
-      },
-      {
-        headers: {
-          "Content-Type": "application/json"
-        }
-      }
-    );
-
-    console.log("Judge0 response:", response.data);
+    const result = await submitAndWait({
+      source_code,
+      language_id: languageId,
+      stdin: stdin || ""
+    });
 
     return res.json({
       success: true,
-      result: response.data
+      result
     });
 
   } catch (error) {
-
-    console.error(
-      "Judge0 Error:",
-      error.response?.data || error.message
-    );
+    console.error("Judge0 Error:", error.response?.data || error.message);
 
     return res.status(500).json({
       success: false,

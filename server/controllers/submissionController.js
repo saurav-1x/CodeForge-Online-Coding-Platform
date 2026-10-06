@@ -1,7 +1,7 @@
 
-const axios = require("axios");
 const Submission = require("../models/Submission");
 const Problem = require("../models/Problem");
+const { submitAndWait } = require("../services/judge0Service");
 
 const submitCode = async (req, res) => {
   try {
@@ -24,10 +24,16 @@ const submitCode = async (req, res) => {
 
     const languageId = Number(language_id);
 
-    if (![71, 62].includes(languageId)) {
+    const languages = {
+      62: "Java",
+      63: "JavaScript",
+      71: "Python",
+    };
+
+    if (!languages[languageId]) {
       return res.status(400).json({
         success: false,
-        message: "Only Python and Java are supported.",
+        message: "Only JavaScript, Python, and Java are supported.",
       });
     }
 
@@ -57,129 +63,71 @@ const submitCode = async (req, res) => {
       });
     }
 
-    // This runner currently supports the Two Sum problem only.
-    if (problem.slug !== "two-sum") {
-      return res.status(400).json({
-        success: false,
-        message: "Automated submission is currently enabled for Two Sum only.",
-      });
-    }
-
-    let allPassed = true;
-    let passedTests = 0;
-    let errorMessage = "";
-    const testResults = [];
-
-    // Use known test cases for Two Sum.
-    const twoSumCases = [
-      { nums: [2, 7, 11, 15], target: 9, expected: [0, 1] },
-      { nums: [3, 2, 4], target: 6, expected: [1, 2] },
-    ];
-
-    for (const testCase of twoSumCases) {
-      let testCode;
-
-      if (languageId === 71) {
-        testCode = `
-import json
-${source_code}
-
-result = two_sum(${JSON.stringify(testCase.nums)}, ${testCase.target})
-print(json.dumps(result))
-`;
-      } else {
-        testCode = `
-import java.util.*;
-${source_code}
-
-public class Main {
-    public static void main(String[] args) {
-        Solution solution = new Solution();
-        int[] nums = {${testCase.nums.join(",")}};
-        int target = ${testCase.target};
-        int[] result = solution.twoSum(nums, target);
-        System.out.println(Arrays.toString(result));
-    }
-}
-`;
-      }
-
-      const judgeResponse = await axios.post(
-        "https://ce.judge0.com/submissions?base64_encoded=false&wait=true",
-        {
-          source_code: testCode,
+    const outcomes = await Promise.all(
+      testCases.map(async (testCase) => {
+        const result = await submitAndWait({
+          source_code,
           language_id: languageId,
-          stdin: "",
-        },
-        { headers: { "Content-Type": "application/json" } }
-      );
-
-      const result = judgeResponse.data;
-
-      if (
-        !result.status ||
-        result.status.id !== 3 ||
-        result.stderr ||
-        result.compile_output
-      ) {
-        allPassed = false;
-        errorMessage =
-          result.stderr ||
-          result.compile_output ||
-          result.status?.description ||
-          "Execution did not complete successfully.";
-
-        testResults.push({
-          expected: testCase.expected,
-          actual: result.stdout?.trim() || "",
-          passed: false,
-          error: errorMessage,
+          stdin: testCase.input || "",
         });
+        const executionError =
+          result.status?.id !== 3 ||
+          Boolean(result.stderr) ||
+          Boolean(result.compile_output);
+        const actual = (result.stdout || "").trim();
+        const passed =
+          !executionError &&
+          normalizeOutput(actual) === normalizeOutput(testCase.output);
 
-        continue;
-      }
+        return { testCase, result, actual, executionError, passed };
+      })
+    );
 
-      const output = (result.stdout || "").trim();
-      let actual;
-
-      try {
-        actual = JSON.parse(output);
-      } catch {
-        const cleaned = output.replace(/^\[/, "").replace(/\]$/, "").trim();
-        actual = cleaned
-          ? cleaned.split(",").map((value) => Number(value.trim()))
-          : [];
-      }
-
-      const passed =
-        Array.isArray(actual) &&
-        actual.length === testCase.expected.length &&
-        actual.every((value, index) => value === testCase.expected[index]);
-
-      if (passed) {
-        passedTests++;
-      } else {
-        allPassed = false;
-      }
-
-      testResults.push({
-        expected: testCase.expected,
-        actual,
-        passed,
-      });
-    }
-
-    const status = allPassed ? "Accepted" : "Wrong Answer";
+    const passedTests = outcomes.filter((outcome) => outcome.passed).length;
+    const firstFailure = outcomes.find((outcome) => !outcome.passed);
+    const status = firstFailure
+      ? firstFailure.executionError
+        ? firstFailure.result.status?.description || "Execution Error"
+        : "Wrong Answer"
+      : "Accepted";
+    const errorMessage = firstFailure?.executionError
+      ? firstFailure.result.stderr ||
+        firstFailure.result.compile_output ||
+        firstFailure.result.message ||
+        firstFailure.result.status?.description ||
+        "Execution did not complete successfully."
+      : firstFailure
+        ? "Output did not match the expected result."
+        : "";
+    const testResults = outcomes.map((outcome) => ({
+      passed: outcome.passed,
+      hidden: Boolean(outcome.testCase.hidden),
+      ...(!outcome.testCase.hidden
+        ? {
+            expected: outcome.testCase.output,
+            actual: outcome.actual,
+          }
+        : {}),
+      ...(outcome.executionError
+        ? {
+            error:
+              outcome.result.stderr ||
+              outcome.result.compile_output ||
+              outcome.result.status?.description ||
+              "Execution did not complete successfully.",
+          }
+        : {}),
+    }));
 
     await Submission.create({
       user: userId,
       problem: problem._id,
-      language: languageId === 71 ? "Python" : "Java",
+      language: languages[languageId],
       languageId,
       code: source_code,
       status,
       passedTests,
-      totalTests: twoSumCases.length,
+      totalTests: testCases.length,
       error: errorMessage,
     });
 
@@ -187,7 +135,8 @@ public class Main {
       success: true,
       status,
       passedTests,
-      totalTests: twoSumCases.length,
+      totalTests: testCases.length,
+      ...(errorMessage ? { message: errorMessage } : {}),
       testResults,
     });
   } catch (error) {
@@ -199,6 +148,13 @@ public class Main {
     });
   }
 };
+
+function normalizeOutput(output) {
+  return String(output)
+    .trim()
+    .replace(/\s*([,\[\]\{\}:])\s*/g, "$1")
+    .replace(/\s+/g, " ");
+}
 
 function mongooseIsObjectId(value) {
   return typeof value === "string" && /^[a-f\d]{24}$/i.test(value);
