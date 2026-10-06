@@ -43,7 +43,9 @@ function CodeEditor({ problem }) {
       const response = await API.post("/code/run", {
         source_code: code,
         language_id: LANGUAGE_IDS[language],
-        stdin: "",
+        stdin:
+          problem?.testCases?.find((testCase) => !testCase.hidden)?.input ||
+          "",
       });
 
       const result = response.data?.result;
@@ -116,8 +118,23 @@ function CodeEditor({ problem }) {
           `✅ Accepted\n\nAll ${passed}/${total} test cases passed!`
         );
       } else {
+        const failedCase = data.testResults?.find(
+          (testResult) => !testResult.passed
+        );
+        const failedCaseNumber = failedCase
+          ? data.testResults.indexOf(failedCase) + 1
+          : null;
+        const details = failedCase
+          ? failedCase.hidden
+            ? `\n\nHidden test case ${failedCaseNumber} failed.`
+            : `\n\nTest case ${failedCaseNumber}` +
+              `\nExpected: ${failedCase.expected || "(no output)"}` +
+              `\nYour output: ${failedCase.actual || "(no output)"}`
+          : "";
+
         setOutput(
           `❌ ${status}\n\nPassed test cases: ${passed}/${total}` +
+            details +
             (data.message ? `\n\n${data.message}` : "")
         );
       }
