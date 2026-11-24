@@ -58,7 +58,10 @@ const register = async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        streak: user.streak
       }
     });
 
@@ -110,6 +113,12 @@ const login = async (req, res) => {
       });
     }
 
+    if (user.status === "suspended") {
+      return res.status(403).json({
+        message: "This account has been suspended"
+      });
+    }
+
     const token = makeToken(user._id);
 
     res.json({
@@ -121,7 +130,10 @@ const login = async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        role: user.role,
+        status: user.status,
+        streak: user.streak
       }
     });
 
@@ -192,6 +204,8 @@ const updateProfile = async (req, res) => {
         id: req.user._id,
         name: req.user.name,
         email: req.user.email,
+        role: req.user.role,
+        status: req.user.status,
         streak: req.user.streak
       }
     });

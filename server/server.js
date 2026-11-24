@@ -12,6 +12,7 @@ const contestRoutes = require("./routes/contestRoutes");
 const discussionRoutes = require("./routes/discussionRoutes");
 const courseRoutes = require("./routes/courseRoutes");
 const leaderboardRoutes = require("./routes/leaderboardRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use("/api/discussions", discussionRoutes);
 app.use("/api/certifications", courseRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/api/admin", adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 

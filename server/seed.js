@@ -5,6 +5,8 @@ const Problem = require("./models/Problem");
 const Contest = require("./models/Contest");
 const Course = require("./models/Course");
 const Discussion = require("./models/Discussion");
+const User = require("./models/User");
+const bcrypt = require("bcryptjs");
 
 const defaultDiscussions = [
   {
@@ -729,6 +731,25 @@ async function seedDatabase() {
     await mongoose.connect(process.env.MONGO_URI);
 
     console.log("MongoDB connected");
+
+    const adminEmail = String(process.env.ADMIN_EMAIL || "admin@codeforge.com").trim().toLowerCase();
+    const adminPassword = process.env.ADMIN_PASSWORD || "Admin@123";
+    const existingAdmin = await User.findOne({ email: adminEmail });
+    if (!existingAdmin) {
+      await User.create({
+        name: "CodeForge Admin",
+        email: adminEmail,
+        password: await bcrypt.hash(adminPassword, 12),
+        role: "admin",
+        status: "active"
+      });
+      console.log(`Administrator created: ${adminEmail}`);
+    } else if (existingAdmin.role !== "admin") {
+      existingAdmin.role = "admin";
+      existingAdmin.status = "active";
+      await existingAdmin.save();
+      console.log(`Existing account promoted to administrator: ${adminEmail}`);
+    }
 
     const result = await Problem.bulkWrite(
       problems.map((problem) => ({

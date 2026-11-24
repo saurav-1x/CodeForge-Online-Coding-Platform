@@ -57,6 +57,7 @@ export default function Navbar() {
             <Link to="/certifications">Certifications</Link>
             <Link to="/leaderboard">Leaderboard</Link>
             <Link to="/submissions">Submissions</Link>
+            {user.role === "admin" && <Link to="/admin" className={location.pathname.startsWith("/admin") ? "nav-active" : ""}>Admin</Link>}
             <div className="profile-menu" ref={menuRef}>
               <button
                 className="profile-trigger"

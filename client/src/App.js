@@ -1,5 +1,5 @@
 import React from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -14,16 +14,22 @@ import Problem from "./pages/Problem";
 import Submissions from "./pages/Submissions";
 import Contests from "./pages/Contests";
 import SectionPlaceholder from "./pages/SectionPlaceholder";
+import Admin from "./pages/Admin";
+import AdminRoute from "./components/AdminRoute";
 
 function App() {
+  const location = useLocation();
+  const isAdminRoute = location.pathname === "/admin" || location.pathname.startsWith("/admin/");
+
   return (
     <>
-      <Navbar />
+      {!isAdminRoute && <Navbar />}
 
       <Routes>
         <Route path="/" element={<Landing />} />
 
         <Route path="/login" element={<Login />} />
+        <Route path="/admin/login" element={<Login adminOnly />} />
 
         <Route path="/register" element={<Register />} />
 
@@ -36,6 +42,9 @@ function App() {
           <Route path="/contests" element={<Contests />} />
           <Route path="/certifications" element={<SectionPlaceholder />} />
           <Route path="/leaderboard" element={<SectionPlaceholder />} />
+        </Route>
+        <Route element={<AdminRoute />}>
+          <Route path="/admin" element={<Admin />} />
         </Route>
         <Route path="/discuss" element={<SectionPlaceholder />} />
 

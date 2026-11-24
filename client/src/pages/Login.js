@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import API from "../services/api";
 
-export default function Login() {
-  const { login } = useAuth();
+export default function Login({ adminOnly = false }) {
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
@@ -16,8 +17,18 @@ export default function Login() {
     setIsSubmitting(true);
     try {
       await login(form.email, form.password);
-      navigate("/");
+      const token = localStorage.getItem("codeforge_token");
+      if (token) {
+        const response = await API.get("/auth/me");
+        if (adminOnly && response.data.user.role !== "admin") {
+          throw { response: { data: { message: "Administrator access required." } } };
+        }
+        navigate(adminOnly || response.data.user.role === "admin" ? "/admin" : "/");
+      }
     } catch (err) {
+      if (adminOnly) {
+        logout();
+      }
       setError(
         err.response?.data?.message ||
         "Cannot reach the server. Please check the API deployment and try again."
@@ -26,6 +37,63 @@ export default function Login() {
       setIsSubmitting(false);
     }
   };
+
+  if (adminOnly) {
+    return (
+      <main className="admin-login-page">
+        <section className="admin-login-card">
+          <div className="admin-login-brand">
+            <span className="brand-mark">&lt;/&gt;</span>
+            <div><strong>CodeForge</strong><small>ADMIN CONTROL</small></div>
+          </div>
+          <div className="admin-login-heading">
+            <span className="admin-eyebrow">ADMIN LOGIN</span>
+            <h1>Sign in to administration</h1>
+            <p>Manage coding questions and view user progress.</p>
+          </div>
+          <form onSubmit={submit} className="admin-login-form">
+            {error && <div className="alert" role="alert">{error}</div>}
+            <label htmlFor="admin-login-email">Email address
+              <input
+                id="admin-login-email"
+                type="email"
+                autoComplete="username"
+                placeholder="admin@codeforge.com"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                required
+              />
+            </label>
+            <label htmlFor="admin-login-password">Password
+              <span className="password-field">
+                <input
+                  id="admin-login-password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  placeholder="Enter your password"
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  required
+                />
+                <button
+                  className="password-toggle"
+                  type="button"
+                  onClick={() => setShowPassword((value) => !value)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </span>
+            </label>
+            <button className="admin-login-submit" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Signing in..." : "Sign in to Admin"}
+              {!isSubmitting && <span aria-hidden="true">→</span>}
+            </button>
+          </form>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="auth-page login-page">
