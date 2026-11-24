@@ -1,6 +1,7 @@
 
 const Submission = require("../models/Submission");
 const Problem = require("../models/Problem");
+const User = require("../models/User");
 const { submitAndWait } = require("../services/judge0Service");
 
 const submitCode = async (req, res) => {
@@ -130,6 +131,16 @@ const submitCode = async (req, res) => {
       totalTests: testCases.length,
       error: errorMessage,
     });
+
+    if (status === "Accepted") {
+      await User.findByIdAndUpdate(userId, {
+        $addToSet: { solvedProblems: problem._id }
+      });
+    } else {
+      await User.findByIdAndUpdate(userId, {
+        $addToSet: { attemptedProblems: problem._id }
+      });
+    }
 
     return res.json({
       success: true,

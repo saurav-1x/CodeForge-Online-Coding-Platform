@@ -2,6 +2,83 @@ require("dotenv").config();
 
 const mongoose = require("mongoose");
 const Problem = require("./models/Problem");
+const Contest = require("./models/Contest");
+const Course = require("./models/Course");
+const Discussion = require("./models/Discussion");
+
+const defaultDiscussions = [
+  {
+    title: "What is your favourite approach to dynamic programming?",
+    category: "Algorithms",
+    messages: [
+      { text: "I usually start by writing the brute-force recurrence first, then optimize it.", user: null }
+    ]
+  },
+  {
+    title: "Share your favourite system design resources",
+    category: "Interview prep",
+    messages: [
+      { text: "The best way to learn is to draw the architecture before reading the solution.", user: null }
+    ]
+  },
+  {
+    title: "Clean ways to handle async errors in JavaScript",
+    category: "JavaScript",
+    messages: [
+      { text: "Small reusable error handlers make async flows much easier to maintain.", user: null }
+    ]
+  }
+];
+
+const defaultContests = [
+  {
+    title: "CodeForge Weekly Challenge",
+    slug: "weekly-challenge",
+    description: "A weekly mixed-difficulty challenge open to all CodeForge programmers.",
+    startTime: new Date("2026-01-01T00:00:00.000Z"),
+    endTime: new Date("2027-12-31T23:59:59.000Z"),
+    status: "Active"
+  },
+  {
+    title: "Algorithms Sprint",
+    slug: "algorithms-sprint",
+    description: "Race through algorithm and data structure problems in this focused sprint.",
+    startTime: new Date("2027-01-15T10:00:00.000Z"),
+    endTime: new Date("2027-01-15T12:00:00.000Z"),
+    status: "Upcoming"
+  }
+];
+
+const defaultCourses = [
+  {
+    title: "JavaScript Foundations",
+    slug: "javascript-foundations",
+    description: "Learn core JavaScript syntax, data structures, functions, and problem-solving patterns.",
+    instructor: "CodeForge",
+    level: "Beginner",
+    duration: "6 hours",
+    udemyUrl: "https://www.udemy.com/course/the-complete-javascript-course/",
+    lessons: [
+      { title: "Variables and Types", duration: "45 min" },
+      { title: "Functions and Scope", duration: "55 min" },
+      { title: "Arrays and Objects", duration: "60 min" }
+    ]
+  },
+  {
+    title: "Algorithms and Data Structures",
+    slug: "algorithms-and-data-structures",
+    description: "Build a strong foundation in arrays, trees, graphs, recursion, and complexity analysis.",
+    instructor: "CodeForge",
+    level: "Intermediate",
+    duration: "10 hours",
+    udemyUrl: "https://www.udemy.com/course/master-the-coding-interview-data-structures-algorithms/",
+    lessons: [
+      { title: "Complexity Analysis", duration: "50 min" },
+      { title: "Recursion", duration: "70 min" },
+      { title: "Trees and Graphs", duration: "90 min" }
+    ]
+  }
+];
 
 const problems = [
   {
@@ -664,6 +741,33 @@ async function seedDatabase() {
     );
 
     console.log(`${result.upsertedCount} new problems added`);
+    await Contest.bulkWrite(
+      defaultContests.map((contest) => ({
+        updateOne: {
+          filter: { slug: contest.slug },
+          update: { $setOnInsert: contest },
+          upsert: true
+        }
+      }))
+    );
+    await Course.bulkWrite(
+      defaultCourses.map((course) => ({
+        updateOne: {
+          filter: { slug: course.slug },
+          update: { $set: { ...course } },
+          upsert: true
+        }
+      }))
+    );
+    await Discussion.bulkWrite(
+      defaultDiscussions.map((discussion) => ({
+        updateOne: {
+          filter: { title: discussion.title },
+          update: { $setOnInsert: discussion },
+          upsert: true
+        }
+      }))
+    );
 
     await mongoose.disconnect();
 
@@ -674,7 +778,7 @@ async function seedDatabase() {
   }
 }
 
-module.exports = { problems, seedDatabase };
+module.exports = { problems, defaultContests, defaultCourses, defaultDiscussions, seedDatabase };
 
 if (require.main === module) {
   seedDatabase();

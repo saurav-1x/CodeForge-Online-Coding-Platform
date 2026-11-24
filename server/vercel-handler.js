@@ -1,7 +1,9 @@
 const mongoose = require("mongoose");
 const app = require("./server");
 const Problem = require("./models/Problem");
-const { problems } = require("./seed");
+const Contest = require("./models/Contest");
+const Course = require("./models/Course");
+const { problems, defaultContests, defaultCourses } = require("./seed");
 
 let connectionPromise;
 let problemSeedPromise;
@@ -29,11 +31,31 @@ async function seedMissingProblems() {
   if (!problemSeedPromise) {
     problemSeedPromise = (async () => {
       await Problem.init();
-      return Problem.bulkWrite(
+      await Problem.bulkWrite(
         problems.map((problem) => ({
           updateOne: {
             filter: { slug: problem.slug },
             update: { $setOnInsert: problem },
+            upsert: true
+          }
+        }))
+      );
+      await Contest.init();
+      await Contest.bulkWrite(
+        defaultContests.map((contest) => ({
+          updateOne: {
+            filter: { slug: contest.slug },
+            update: { $setOnInsert: contest },
+            upsert: true
+          }
+        }))
+      );
+      await Course.init();
+      await Course.bulkWrite(
+        defaultCourses.map((course) => ({
+          updateOne: {
+            filter: { slug: course.slug },
+            update: { $setOnInsert: course },
             upsert: true
           }
         }))

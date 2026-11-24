@@ -49,7 +49,13 @@ export default function Navbar() {
       <nav className="nav-links" aria-label="Main navigation">
         {user ? (
           <>
+            <Link to="/problems">Explore</Link>
+            <Link to="/dashboard">Dashboard</Link>
             <Link to="/problems">Problems</Link>
+            <Link className={location.pathname === "/contests" ? "nav-active" : ""} to="/contests">Contests</Link>
+            <Link to="/discuss">Discuss</Link>
+            <Link to="/certifications">Certifications</Link>
+            <Link to="/leaderboard">Leaderboard</Link>
             <Link to="/submissions">Submissions</Link>
             <div className="profile-menu" ref={menuRef}>
               <button
